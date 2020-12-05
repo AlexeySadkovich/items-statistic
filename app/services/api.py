@@ -1,15 +1,16 @@
 import requests
 
+from core.config import API_KEY
+
 ITEMS_ENDPOINT = "https://m.avito.ru/api/9/items"
 LOCATION_ENDPOINT = "https://m.avito.ru/api/1/slocations"
-API_KEY = "af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir"
 
 
-def get_items_count(query: str, region: str) -> int:
+def get_items_count(phrase: str, region: str) -> int:
     """
     Return count of items specified by
      search phrase and region
-    :param query: search phrase (string)
+    :param phrase: search phrase (string)
     :param region: location of searching (string)
     :return: count of items (integer)
     """
@@ -17,7 +18,7 @@ def get_items_count(query: str, region: str) -> int:
     params = {
         "key": API_KEY,
         "locationId": _get_region_id(region),
-        "query": query,
+        "query": phrase,
         "page": 1
     }
 

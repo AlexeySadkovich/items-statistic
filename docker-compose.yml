@@ -15,7 +15,19 @@ services:
     volumes:
       - mongo_data:/var/lib/mongo/
     ports:
-    - ${MONGO_PORT}:${MONGO_PORT}
+      - ${MONGO_PORT}:${MONGO_PORT}
+
+  redis:
+    image: "redis:alpine"
+
+  celery:
+    build: ./app
+    command: celery -A core.celery worker --beat -l info
+    links:
+      - redis
+    depends_on:
+      - redis
+      - app
 
 volumes:
   mongo_data:
