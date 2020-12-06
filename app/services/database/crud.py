@@ -18,3 +18,7 @@ def save_query(query: QueryCreate) -> Query:
     saved_query.region = query.region
 
     return saved_query
+
+
+def save_statistic():
+    pass

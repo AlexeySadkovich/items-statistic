@@ -14,5 +14,5 @@ async def add_query(query: QueryCreate):
 
 
 @router.get("/stat")
-async def get_stat():
+async def get_stat(query_id: str):
     pass

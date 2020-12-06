@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict
 
 from bson import ObjectId
 from pydantic import BaseModel
@@ -27,13 +27,10 @@ class QueryCreate(QueryBase):
 
 class Query(QueryBase):
     id: PyObjectId
+    timestamps: Dict
 
     class Config:
         orm_mode = True
         json_encoders = {
             ObjectId: str
         }
-
-
-class QueryStat(QueryBase):
-    timestamps: List
