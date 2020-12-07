@@ -10,9 +10,10 @@ router = APIRouter()
 async def add_query(query: QueryCreate):
     """Save query to database and return its id"""
     saved_query = crud.save_query(query)
-    return saved_query.id
+    return str(saved_query.id)
 
 
 @router.get("/stat")
-async def get_stat(query_id: str):
-    pass
+async def get_statistic(query_id: str):
+    stat = crud.get_statistic_for_query(query_id)
+    return stat

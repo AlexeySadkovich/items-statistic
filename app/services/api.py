@@ -42,7 +42,8 @@ def _get_region_id(region: str) -> int:
     locations = data["result"]["locations"]
 
     for location in locations:
-        if location["name"].lower() == region.lower():
+        name = location["names"]["1"]
+        if name.lower() == region.lower():
             region_id = location["id"]
 
     return region_id

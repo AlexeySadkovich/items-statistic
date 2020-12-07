@@ -1,7 +1,7 @@
-from typing import Dict
+from typing import List, Optional
 
 from bson import ObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PyObjectId(ObjectId):
@@ -12,7 +12,7 @@ class PyObjectId(ObjectId):
     @classmethod
     def validate(cls, v):
         if not ObjectId.is_valid(v):
-            raise ValueError('Invalid objectid')
+            raise ValueError('Invalid objectId')
         return ObjectId(v)
 
 
@@ -26,11 +26,12 @@ class QueryCreate(QueryBase):
 
 
 class Query(QueryBase):
-    id: PyObjectId
-    timestamps: Dict
+    id: Optional[PyObjectId] = Field(alias='_id')
+    timestamps: List
 
     class Config:
         orm_mode = True
+        arbitrary_types_allowed = True
         json_encoders = {
             ObjectId: str
         }

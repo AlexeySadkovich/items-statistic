@@ -6,7 +6,7 @@ services:
     env_file:
       - ./.env
     ports:
-      - 5000:5000
+      - 8000:8000
 
   mongodb:
     image: mongo
@@ -23,11 +23,14 @@ services:
   celery:
     build: ./app
     command: celery -A core.celery worker --beat -l info
+    env_file:
+      - ./.env
     links:
       - redis
     depends_on:
       - redis
       - app
+      - mongodb
 
 volumes:
   mongo_data:
