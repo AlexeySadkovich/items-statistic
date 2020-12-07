@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List
 
-from  pymongo import errors
 from bson import ObjectId
 
 from services.api import get_items_count
@@ -36,13 +35,36 @@ def save_query(query: QueryCreate) -> Query:
     return Query(**query_to_save)
 
 
-def get_statistic_for_query(query_id: str) -> List:
+def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetime) -> List:
+    """
+    Return counts timestamps for required query
+    in the time range specified by parameters
+    :param query_id: id of query (str)
+    :param time_from: begin of time range (datetime)
+    :param time_to: end of time range (datetime)
+    :return: list of timestamps which contain time and count
+    """
     queries = db["queries"]
+
+    result = []
 
     saved_query = queries.find_one({"_id": ObjectId(query_id)})
     query_data = Query(**saved_query)
 
-    return query_data.timestamps
+    for ts in query_data.timestamps:
+        if not time_from and not time_to:
+            break
+
+        if not time_from:
+            time_from = datetime(1970, 1, 1)
+
+        if not time_to:
+            time_to = datetime.now()
+
+        if time_from <= ts["time"] <= time_to:
+            result.append(ts)
+
+    return result
 
 
 def update_queries_stat():
