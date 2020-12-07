@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from bson import ObjectId
 from pydantic import BaseModel, Field
@@ -28,7 +27,7 @@ class QueryCreate(QueryBase):
 
 class Query(QueryBase):
     id: Optional[PyObjectId] = Field(alias='_id')
-    timestamps: List
+    timestamps: list
 
     class Config:
         orm_mode = True

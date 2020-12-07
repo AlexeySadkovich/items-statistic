@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 import bson
 from bson import ObjectId
@@ -10,7 +9,7 @@ from services.database.database import db
 from services.database.schemas import QueryCreate, Query
 
 
-def save_query(query: QueryCreate) -> Query:
+async def save_query(query: QueryCreate) -> Query:
     """
     Save query to database
     :param query: consist phrase and region (QueryCreate)
@@ -30,14 +29,14 @@ def save_query(query: QueryCreate) -> Query:
         "count": get_items_count(query.phrase, query.region)
     })
 
-    inserted_id = queries.insert_one(query_to_save).inserted_id
+    inserted_id = await queries.insert_one(query_to_save).inserted_id
 
     query_to_save["id"] = inserted_id
 
     return Query(**query_to_save)
 
 
-def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetime) -> List:
+async def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetime) -> list:
     """
     Return counts timestamps for required query
     in the time range specified by parameters
@@ -48,10 +47,8 @@ def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetim
     """
     queries = db["queries"]
 
-    result = []
-
     try:
-        saved_query = queries.find_one({"_id": ObjectId(query_id)})
+        saved_query = await queries.find_one({"_id": ObjectId(query_id)})
     except bson.errors.InvalidId:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -69,6 +66,8 @@ def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetim
     if not time_from and not time_to:
         return query_data.timestamps
 
+    result = []
+
     for ts in query_data.timestamps:
         if not time_from:
             time_from = datetime(1970, 1, 1)
@@ -82,15 +81,15 @@ def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetim
     return result
 
 
-def update_queries_stat():
+async def update_queries_stat():
     """Update statistic for all saved queries"""
     queries = db["queries"]
 
-    for q in queries.find():
+    async for q in queries.find():
         query_data = Query(**q)
         new_statistic = {
             "time": datetime.now(),
             "count": get_items_count(query_data.phrase, query_data.region)
         }
 
-        queries.update_one({"_id": ObjectId(query_data.id)}, {"$push": {"timestamps": new_statistic}})
+        await queries.update_one({"_id": ObjectId(query_data.id)}, {"$push": {"timestamps": new_statistic}})
