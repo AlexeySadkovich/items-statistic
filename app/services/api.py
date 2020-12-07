@@ -1,4 +1,5 @@
 import requests
+from fastapi import HTTPException, status
 
 from core.config import API_KEY
 
@@ -40,6 +41,12 @@ def _get_region_id(region: str) -> int:
     data = req.json()
 
     locations = data["result"]["locations"]
+
+    if len(locations) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Region for searching not found"
+        )
 
     for location in locations:
         name = location["names"]["1"]

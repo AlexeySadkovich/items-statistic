@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import List
 
+import bson
 from bson import ObjectId
+from fastapi import HTTPException, status
 
 from services.api import get_items_count
 from services.database.database import db
@@ -48,13 +50,26 @@ def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetim
 
     result = []
 
-    saved_query = queries.find_one({"_id": ObjectId(query_id)})
+    try:
+        saved_query = queries.find_one({"_id": ObjectId(query_id)})
+    except bson.errors.InvalidId:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid query ID"
+        )
+
+    if not saved_query:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Query with id {query_id} not found"
+        )
+
     query_data = Query(**saved_query)
 
-    for ts in query_data.timestamps:
-        if not time_from and not time_to:
-            break
+    if not time_from and not time_to:
+        return query_data.timestamps
 
+    for ts in query_data.timestamps:
         if not time_from:
             time_from = datetime(1970, 1, 1)
 
