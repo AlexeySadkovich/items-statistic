@@ -19,21 +19,24 @@ async def save_query(query: QueryCreate) -> Query:
     :return: saved query with id (Query)
     """
 
+    query_to_save = {
+        "phrase": query.phrase.lower(),
+        "region": query.region.lower(),
+        "timestamps": []
+    }
+
     # Check if such phrase and region already saved
-    saved_query = await queries.find_one({"phrase": query.phrase, "region": query.region})
+    saved_query = await queries.find_one({
+        "phrase": query_to_save["phrase"],
+        "region": query_to_save["region"]
+    })
     if saved_query:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Such phrase and region already saved"
         )
 
-    query_to_save = {
-        "phrase": query.phrase,
-        "region": query.region,
-        "timestamps": []
-    }
-
-    items_data = get_items_data(query.phrase, query.region, TOP_ITEMS_AMOUNT)
+    items_data = get_items_data(query_to_save["phrase"], query_to_save["region"], TOP_ITEMS_AMOUNT)
 
     query_to_save["timestamps"].append({
         "time": datetime.now(),
@@ -95,7 +98,6 @@ async def get_statistic_for_query(query_id: str, field: str, time_from: datetime
 
 async def update_queries_stat():
     """Update statistic for all saved queries"""
-    print("update")
     async for q in queries.find():
         query_data = Query(**q)
         items_data = get_items_data(query_data.phrase, query_data.region, 5)

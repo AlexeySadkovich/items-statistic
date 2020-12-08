@@ -9,6 +9,6 @@ celery = Celery("tasks", include=["core.tasks"], broker=BROKER_URL)
 celery.conf.beat_schedule = {
     'update-statistic': {
         'task': 'core.tasks.update_statistic',
-        'schedule': crontab(minute=f'*/{UPDATE_STATISTIC_FREQ}')
+        'schedule': crontab(hour=f'*/{UPDATE_STATISTIC_FREQ}')
     }
 }

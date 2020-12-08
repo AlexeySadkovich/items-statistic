@@ -16,25 +16,30 @@ def get_items_data(phrase: str, region: str, top_offset: int) -> dict:
     :param top_offset: amount of top items
     :return: count of items (integer)
     """
-
     data = _get_items(phrase, region)
-    # items = data["result"]["items"]
+    items = data["result"]["items"][:top_offset]
 
-    # items_list = []
-    # item_index = 0
-    # while item_index <= top_offset:
-    #     item = items[item_index]
-    #     if item["type"] == "item":
-    #         print("da zaebalo suka")
-    #         items_list.append({
-    #             "title": item["value"]["title"],
-    #             "url": "avito.ru" + item["value"]["uri_mweb"]
-    #         })
-    #         item_index += 1
+    # Take title and url of top items
+    top_items = []
+    for item in items:
+        value = item["value"]
+        # Check for unusual structure of json data
+        if "list" in value:
+            formatted_item = {
+                "title": value["list"][0]["value"]["title"],
+                "url": "avito.ru" + value["list"][0]["value"]["uri_mweb"]
+            }
+        else:
+            formatted_item = {
+                "title": value["title"],
+                "url": "avito.ru" + value["uri_mweb"]
+            }
+
+        top_items.append(formatted_item)
 
     result = {
         "count": data["result"]["totalCount"],
-        "top": data["result"]["items"][:top_offset]
+        "top": top_items
     }
 
     return result

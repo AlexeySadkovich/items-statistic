@@ -5,7 +5,7 @@ API_KEY = "af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir"
 
 TOP_ITEMS_AMOUNT = 5
 
-# Set frequency of statistic updating in minutes
+# Set frequency of statistic updating in hours
 UPDATE_STATISTIC_FREQ = 1
 
 # Redis
