@@ -3,6 +3,8 @@ import os
 
 API_KEY = "af0deccbgcgidddjgnvljitntccdduijhdinfgjgfjir"
 
+TOP_ITEMS_AMOUNT = 5
+
 # Set frequency of statistic updating in minutes
 UPDATE_STATISTIC_FREQ = 1
 

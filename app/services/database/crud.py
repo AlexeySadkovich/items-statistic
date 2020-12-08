@@ -4,9 +4,12 @@ import bson
 from bson import ObjectId
 from fastapi import HTTPException, status
 
-from services.api import get_items_count
+from core.config import TOP_ITEMS_AMOUNT
+from services.api import get_items_data
 from services.database.database import db
 from services.database.schemas import QueryCreate, Query
+
+queries = db["queries"]
 
 
 async def save_query(query: QueryCreate) -> Query:
@@ -16,7 +19,13 @@ async def save_query(query: QueryCreate) -> Query:
     :return: saved query with id (Query)
     """
 
-    queries = db["queries"]
+    # Check if such phrase and region already saved
+    saved_query = await queries.find_one({"phrase": query.phrase, "region": query.region})
+    if saved_query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Such phrase and region already saved"
+        )
 
     query_to_save = {
         "phrase": query.phrase,
@@ -24,31 +33,36 @@ async def save_query(query: QueryCreate) -> Query:
         "timestamps": []
     }
 
+    items_data = get_items_data(query.phrase, query.region, TOP_ITEMS_AMOUNT)
+
     query_to_save["timestamps"].append({
         "time": datetime.now(),
-        "count": get_items_count(query.phrase, query.region)
+        "count": items_data["count"],
+        "top_items": items_data["top"]
     })
 
-    inserted_id = await queries.insert_one(query_to_save).inserted_id
+    inserted = await queries.insert_one(query_to_save)
 
-    query_to_save["id"] = inserted_id
+    query_to_save["id"] = inserted.inserted_id
 
     return Query(**query_to_save)
 
 
-async def get_statistic_for_query(query_id: str, time_from: datetime, time_to: datetime) -> list:
+async def get_statistic_for_query(query_id: str, field: str, time_from: datetime, time_to: datetime) -> list:
     """
     Return counts timestamps for required query
     in the time range specified by parameters
     :param query_id: id of query (str)
+    :param field: field which should be taken from statistic
     :param time_from: begin of time range (datetime)
     :param time_to: end of time range (datetime)
     :return: list of timestamps which contain time and count
     """
-    queries = db["queries"]
+
+    fields = {"timestamps.time": 1, f"timestamps.{field}": 1}
 
     try:
-        saved_query = await queries.find_one({"_id": ObjectId(query_id)})
+        saved_query = await queries.find_one({"_id": ObjectId(query_id)}, fields)
     except bson.errors.InvalidId:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,14 +75,12 @@ async def get_statistic_for_query(query_id: str, time_from: datetime, time_to: d
             detail=f"Query with id {query_id} not found"
         )
 
-    query_data = Query(**saved_query)
-
     if not time_from and not time_to:
-        return query_data.timestamps
+        return saved_query["timestamps"]
 
     result = []
 
-    for ts in query_data.timestamps:
+    for ts in saved_query["timestamps"]:
         if not time_from:
             time_from = datetime(1970, 1, 1)
 
@@ -83,13 +95,15 @@ async def get_statistic_for_query(query_id: str, time_from: datetime, time_to: d
 
 async def update_queries_stat():
     """Update statistic for all saved queries"""
-    queries = db["queries"]
-
+    print("update")
     async for q in queries.find():
         query_data = Query(**q)
+        items_data = get_items_data(query_data.phrase, query_data.region, 5)
+
         new_statistic = {
             "time": datetime.now(),
-            "count": get_items_count(query_data.phrase, query_data.region)
+            "count": items_data["count"],
+            "top_items": items_data["top"]
         }
 
         await queries.update_one({"_id": ObjectId(query_data.id)}, {"$push": {"timestamps": new_statistic}})
